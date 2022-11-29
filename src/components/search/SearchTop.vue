@@ -80,71 +80,80 @@
 </template>
 
 <script>
-import axios from 'axios';
+import {findmusicapi}  from "@/request/api/search"
 import Composite from "@/components/search/Composite.vue"
+import { reactive, toRefs } from 'vue';
 export default {
     components:{
         Composite
     },
-    data() {
-        return {
+    // setup写法
+    setup(){
+        //数据
+        let data=reactive({
             value:"",
             historylist:JSON.parse(localStorage.getItem("historylist")),
             isempty:true,
             isshow:false,
             list:[],
             issearch:false,
-        }
-    },
-    methods:{
-        find(){
-            if(this.value!='')
+        })
+
+        //方法
+        function find(){
+            if(data.value!='')
             // 判读输入的字符串是否为空 如果空 就什么都不执行
             {
-                this.isempty=false;
-                this.historylist.unshift(this.value)
+                data.isempty=false;
+                data.historylist.unshift(data.value)
                 // 数组去重
-                this.historylist=[...new Set(this.historylist)]
-                localStorage.setItem("historylist",JSON.stringify(this.historylist));
-                this.searchmusic()
-                this.issearch=true;
+                data.historylist=[...new Set(data.historylist)]
+                localStorage.setItem("historylist",JSON.stringify(data.historylist));
+                searchmusic();
+                data.issearch=true;
             }
-        },
-        deletehistorylist(){
-            this.isshow=true
-            // 点击删除的时候 弹出提示框
-        },
-        cancle(){
-            this.isshow=false;
-            // 点击取消 提示框消失
-        },
-        clearall(){
-            this.isshow=false;
-            // 点击确认 提示框消失 
-            this.historylist=[];
-            localStorage.setItem("historylist",JSON.stringify(this.historylist));
-            // 搜索历史列表为空
-            this.isempty=true;
-        },
-        searchmusic(){
-            axios.get(` http://localhost:3000/cloudsearch?keywords=${this.value}`).then((res)=>{
-                console.log(res.data.result);
-                this.list=res.data.result
-            })
-        },
-        back(){
-            if(!this.issearch){
-                // 如果不是在搜索中 就回退到上一个页面
-                this.$router.go(-1)
-            }
-            this.issearch=false
-        },
-        search(value){
-            this.value=value;
-            this.searchmusic()
-            this.issearch=true;
         }
 
+        function deletehistorylist(){
+            data.isshow=true
+            // 点击删除的时候 弹出提示框
+        }
+        function cancle(){
+            data.isshow=false;
+            // 点击取消 提示框消失
+        }
+        function clearall(){
+            data.isshow=false;
+            // 点击确认 提示框消失 
+            data.historylist=[];
+            localStorage.setItem("historylist",JSON.stringify(data.historylist));
+            // 搜索历史列表为空
+            data.isempty=true;
+        }
+        function searchmusic(){
+            findmusicapi(data.value).then((res)=>{
+                data.list=res.data.result
+            })
+        }
+        function back(){
+            if(!data.issearch){
+                // 如果不是在搜索中 就回退到上一个页面
+                $router.go(-1)
+            }
+            data.issearch=false
+        }
+        
+        function search(value){
+            data.value=value;
+            searchmusic()
+            data.issearch=true;
+        }
+
+        return{
+        ...toRefs(data),
+        find,deletehistorylist,cancle,clearall,back,search
+    }
+        
     },
 
 }
